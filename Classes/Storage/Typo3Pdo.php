@@ -14,6 +14,8 @@
 
 namespace Causal\CslOauth2\Storage;
 
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
 /**
  * Simple PDO storage for TYPO3.
  *
@@ -30,21 +32,30 @@ class Typo3Pdo extends \OAuth2\Storage\Pdo {
      */
     public function __construct()
     {
-        $dsn = 'mysql:dbname=' . TYPO3_db . ';';
-        if (!empty($GLOBALS['TYPO3_CONF_VARS']['DB']['socket'])) {
-            $dsn .= 'unix_socket=' . $GLOBALS['TYPO3_CONF_VARS']['DB']['socket'];
-        } else {
-            $dsn .= 'host=' . TYPO3_db_host;
-            if (!empty($GLOBALS['TYPO3_CONF_VARS']['DB']['port'])) {
-                $dsn .= ';port=' . (int)$GLOBALS['TYPO3_CONF_VARS']['DB']['port'];
+        
+    
+        $connection = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getConnectionForTable('tx_csloauth2_oauth_clients');
+        $pdo = $connection->getWrappedConnection();
+        
+        if (!$pdo instanceof \PDO) {
+    
+            $config = $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default'];
+            $dsn = 'mysql:dbname=' . $config['dbname'] . ';';
+            if ( !empty($config['socket']) ) {
+                $dsn .= 'unix_socket=' . $config['socket'];
+            } else {
+                $dsn .= 'host=' . $config['host'];
+                if ( !empty($config['port']) ) {
+                    $dsn .= ';port=' . (int)$config['port'];
+                }
             }
+            $pdo = [
+                'dsn' => $dsn,
+                'username' => $config['user'],
+                'password' => $config['password'],
+            ];
         }
-
-        parent::__construct([
-            'dsn' => $dsn,
-            'username' => TYPO3_db_username,
-            'password' => TYPO3_db_password,
-        ], [
+        parent::__construct($pdo, [
             'client_table' => 'tx_csloauth2_oauth_clients',
             'access_token_table' => 'tx_csloauth2_oauth_access_tokens',
             'refresh_token_table' => 'tx_csloauth2_oauth_refresh_tokens',

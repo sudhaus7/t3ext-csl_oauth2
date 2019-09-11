@@ -15,6 +15,7 @@
 namespace Causal\CslOauth2\Hooks;
 
 use TYPO3\CMS\Backend\Utility\BackendUtility;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 if (version_compare(phpversion(), '7.0', '<')) {
@@ -136,11 +137,11 @@ class DataHandler
         if (!empty($updatedData)) {
             // Generate a random new client_id
             $payload = $row['name'] . '-' . $id;
-
-            $this->getDatabaseConnection()->exec_UPDATEquery(
+    
+            $this->getDatabaseConnection($table)->update(
                 $table,
-                'uid=' . $id,
-                $updatedData
+                $updatedData,
+                ['uid'=> $id]
             );
         }
     }
@@ -182,15 +183,14 @@ class DataHandler
     {
         return hash_hmac($algorithm, $payload, $GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey'], $rawOutput);
     }
-
+    
     /**
-     * Returns the database connection.
-     *
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
+     * @param $table
+     * @return \TYPO3\CMS\Core\Database\Connection
      */
-    protected function getDatabaseConnection()
+    protected function getDatabaseConnection($table)
     {
-        return $GLOBALS['TYPO3_DB'];
+        return GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($table);
     }
 
 }

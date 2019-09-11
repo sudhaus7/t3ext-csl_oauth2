@@ -14,6 +14,8 @@
 
 namespace Causal\CslOauth2\Controller;
 
+use Doctrine\DBAL\FetchMode;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class Server {
@@ -222,15 +224,23 @@ class Server {
                 throw new \InvalidArgumentException('Context "' . $context . '" is not yet implemented', 1459697724);
         }
 
-        $database = $this->getDatabaseConnection();
-        $user = $database->exec_SELECTgetSingleRow(
+        $database = $this->getDatabaseConnection($table);
+        $user = $database->select(
             'uid, password',
             $table,
-            'username=' . $database->fullQuoteStr($username, $table) . ' AND disable=0 AND deleted=0'
-        );
+            [
+                'username'=>$database->quoteIdentifier($username),
+                'disable'=>0,
+                'deleted'=>0
+            ]
+        )->fetch(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
         if (!empty($user)) {
             $hashedPassword = $user['password'];
-            $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getSaltingInstance($hashedPassword);
+    
+            $objInstanceSaltedPW = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::class)->get($hashedPassword, $context);
+            
+            //$objInstanceSaltedPW = \TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::getSaltingInstance($hashedPassword);
+            //$objInstanceSaltedPW = \TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::getSaltingInstance($hashedPassword);
             if (is_object($objInstanceSaltedPW)) {
                 $validPasswd = $objInstanceSaltedPW->checkPassword($password, $hashedPassword);
                 if ($validPasswd) {
@@ -240,13 +250,13 @@ class Server {
             }
         }
     }
-
+    
     /**
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
+     * @return \TYPO3\CMS\Core\Database\Connection
      */
-    protected function getDatabaseConnection()
+    protected function getDatabaseConnection($table) : \TYPO3\CMS\Core\Database\Connection
     {
-        return $GLOBALS['TYPO3_DB'];
+        return GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($table);
     }
 }
 
