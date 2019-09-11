@@ -168,6 +168,7 @@ class Server {
         if (!empty($access)) {
             $db = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('fe_users');
             $stmt = $db->select(...[
+                
                 'username',
                 'first_name',
                 'last_name',
@@ -182,6 +183,7 @@ class Server {
             $result = $stmt->execute();
             $row = $result->fetch(\PDO::FETCH_ASSOC);
             if ( !empty($row) ) {
+                $row['id'] = $access['user_id'];
                 $payload = $row;
             }
         }
