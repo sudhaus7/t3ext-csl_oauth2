@@ -226,7 +226,7 @@ class Server {
 
         $database = $this->getDatabaseConnection($table);
         $user = $database->select(
-            'uid, password',
+            ['uid', 'password'],
             $table,
             [
                 'username'=>$database->quoteIdentifier($username),
