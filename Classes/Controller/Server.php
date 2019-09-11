@@ -225,7 +225,7 @@ class Server {
         }
 
         $database = $this->getDatabaseConnection($table);
-        $user = $database->select(
+        $stmt = $database->select(
             ['uid', 'password'],
             $table,
             [
@@ -233,7 +233,9 @@ class Server {
                 'disable'=>0,
                 'deleted'=>0
             ]
-        )->fetch(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
+        );
+        $stmt->execute();
+        $user = $stmt->fetch(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
         \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$user,$database,$username,$password]);
         exit;
         if (!empty($user)) {
