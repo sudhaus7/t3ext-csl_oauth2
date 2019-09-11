@@ -159,8 +159,8 @@ class Server {
             ->from('tx_csloauth2_oauth_access_tokens')
             ->where(
                 $db->expr()->andX(...[
-                    $db->expr()->eq('access_token',(string)$access_token),
-                    $db->expr()->gt('expires',(string)date('Y-m-d H:i:s'))
+                    $db->expr()->eq('access_token',$db->quote($access_token)),
+                    $db->expr()->gt('expires','NOW()')
                 ])
             );
         $result = $stmt->execute();
