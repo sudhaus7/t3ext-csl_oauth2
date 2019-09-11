@@ -229,7 +229,7 @@ class Server {
             ['uid', 'password'],
             $table,
             [
-                'username'=>$database->quoteIdentifier($username),
+                'username'=>$username, //$database->quoteIdentifier($username),
                 'disable'=>0,
                 'deleted'=>0
             ]
