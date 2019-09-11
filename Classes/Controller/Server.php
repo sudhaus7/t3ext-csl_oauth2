@@ -236,7 +236,7 @@ class Server {
         );
         $stmt->execute();
         $user = $stmt->fetch(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$user,$database,$username,$password]);
+        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$user,$database,$username,$password,$stmt]);
         exit;
         if (!empty($user)) {
             $hashedPassword = $user['password'];
