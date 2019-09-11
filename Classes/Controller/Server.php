@@ -160,7 +160,7 @@ class Server {
             ->where(
                 $db->expr()->andX(...[
                     $db->expr()->eq('access_token',$access_token),
-                    $db->expr()->gt('expires',new \DateTime())
+                    $db->expr()->gt('expires',$db->quoteIdentifier(date('Y-m-d H:i:s')))
                 ])
             );
         $result = $stmt->execute();
