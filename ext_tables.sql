@@ -55,7 +55,7 @@ CREATE TABLE tx_csloauth2_oauth_refresh_tokens (
 ) ENGINE=InnoDB;
 
 CREATE TABLE tx_csloauth2_oauth_users (
-  username varchar(255) NOT NULL,
+  username varchar(128) NOT NULL,
   password varchar(2000),
   first_name varchar(255),
   last_name varchar(255),
