@@ -314,6 +314,7 @@ switch ($mode) {
         break;
     case 'profile':
         $access_token = GeneralUtility::_GET('access_token');
+        $server->handleProfileRequest($access_token);
         break;
     default:
         throw new \Exception('Invalid mode provided: "' . $mode . '"', 1457023604);
