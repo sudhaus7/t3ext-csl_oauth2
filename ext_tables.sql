@@ -29,7 +29,8 @@ CREATE TABLE tx_csloauth2_oauth_access_tokens (
   expires timestamp NOT NULL,
   scope varchar(2000),
 
-  CONSTRAINT access_token_pk PRIMARY KEY (access_token)
+
+  PRIMARY KEY (access_token)
 ) ENGINE=InnoDB;
 
 CREATE TABLE tx_csloauth2_oauth_authorization_codes (
@@ -40,7 +41,7 @@ CREATE TABLE tx_csloauth2_oauth_authorization_codes (
   expires timestamp NOT NULL,
   scope varchar(2000),
 
-  CONSTRAINT auth_code_pk PRIMARY KEY (authorization_code)
+  PRIMARY KEY (authorization_code)
 ) ENGINE=InnoDB;
 
 CREATE TABLE tx_csloauth2_oauth_refresh_tokens (
@@ -50,7 +51,7 @@ CREATE TABLE tx_csloauth2_oauth_refresh_tokens (
   expires timestamp NOT NULL,
   scope varchar(2000),
 
-  CONSTRAINT refresh_token_pk PRIMARY KEY (refresh_token)
+  PRIMARY KEY (refresh_token)
 ) ENGINE=InnoDB;
 
 CREATE TABLE tx_csloauth2_oauth_users (
@@ -59,12 +60,12 @@ CREATE TABLE tx_csloauth2_oauth_users (
   first_name varchar(255),
   last_name varchar(255),
 
-  CONSTRAINT username_pk PRIMARY KEY (username)
+  PRIMARY KEY (username)
 ) ENGINE=InnoDB;
 
 CREATE TABLE tx_csloauth2_oauth_scopes (
   scope text,
-  is_default BOOLEAN
+  is_default TINYINT
 ) ENGINE=InnoDB;
 
 CREATE TABLE tx_csloauth2_oauth_jwt (
@@ -72,5 +73,5 @@ CREATE TABLE tx_csloauth2_oauth_jwt (
   subject varchar(80),
   public_key varchar(2000),
 
-  CONSTRAINT jwt_client_id_pk PRIMARY KEY (client_id)
+  PRIMARY KEY (client_id)
 ) ENGINE=InnoDB;
