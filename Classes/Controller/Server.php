@@ -238,7 +238,6 @@ class Server {
             $hashedPassword = $user['password'];
     
             $objInstanceSaltedPW = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::class)->get($hashedPassword, $context);
-            
             //$objInstanceSaltedPW = \TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::getSaltingInstance($hashedPassword);
             //$objInstanceSaltedPW = \TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::getSaltingInstance($hashedPassword);
             if (is_object($objInstanceSaltedPW)) {
@@ -248,6 +247,8 @@ class Server {
                     $_SESSION['user_id'] = (int)$user['uid'];
                 }
             }
+            \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$hashedPassword, $context,$objInstanceSaltedPW,$validPasswd]);
+    
         }
     }
     
