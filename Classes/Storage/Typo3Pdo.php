@@ -35,9 +35,9 @@ class Typo3Pdo extends \OAuth2\Storage\Pdo {
         
     
         $connection = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getConnectionForTable('tx_csloauth2_oauth_clients');
-        $pdo = $connection->getWrappedConnection();
+        //$pdo = $connection->getWrappedConnection();
         
-        if (!$pdo instanceof \PDO) {
+        //if (!$pdo instanceof \PDO) {
     
             $config = $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default'];
             $dsn = 'mysql:dbname=' . $config['dbname'] . ';';
@@ -54,7 +54,7 @@ class Typo3Pdo extends \OAuth2\Storage\Pdo {
                 'username' => $config['user'],
                 'password' => $config['password'],
             ];
-        }
+        //}
         parent::__construct($pdo, [
             'client_table' => 'tx_csloauth2_oauth_clients',
             'access_token_table' => 'tx_csloauth2_oauth_access_tokens',
