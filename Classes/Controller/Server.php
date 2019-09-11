@@ -150,6 +150,29 @@ class Server {
         $this->oauth2Server->handleAuthorizeRequest($request, $response, $isAuthorized, $userId)->send();
     }
 
+    
+    public function handleProfileRequest($access_token) {
+        $db = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('fe_users');
+        
+        $stmt = $db->select(...['username','first_name','last_name','email'])
+            ->from('tx_csloauth2_oauth_access_tokens')
+            ->where(
+                $db->expr()->andX(...[
+                    $db->expr()->eq('access_token',$access_token),
+                    $db->expr()->gt('expires',date('Y-m-d H:i:s'))
+                ])
+            );
+        $result = $stmt->execute();
+        $row = $result->fetch(\PDO::FETCH_ASSOC);
+        $payload = ['error'=>'not found'];
+        if (!empty($row)) {
+            $payload = $row;
+        }
+        
+        header('Content-Type: application/json');
+        echo \json_encode($payload);
+        
+    }
     /**
      * Handles a request for an OAuth2.0 Access Token and sends
      * the response to the client.
@@ -288,6 +311,9 @@ switch ($mode) {
         break;
     case 'token':
         $server->handleTokenRequest();
+        break;
+    case 'profile':
+        $access_token = GeneralUtility::_GET('access_token');
         break;
     default:
         throw new \Exception('Invalid mode provided: "' . $mode . '"', 1457023604);
