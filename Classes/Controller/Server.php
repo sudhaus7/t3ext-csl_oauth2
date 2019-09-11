@@ -152,7 +152,7 @@ class Server {
 
     
     public function handleProfileRequest($access_token) {
-        $db = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('fe_users');
+        $db = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('tx_csloauth2_oauth_access_tokens');
         $payload = ['error' => 'not found'];
     
         $stmt = $db->select(...['*'])
@@ -166,6 +166,7 @@ class Server {
         $result = $stmt->execute();
         $access = $result->fetch(\PDO::FETCH_ASSOC);
         if (!empty($access)) {
+            $db = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('fe_users');
             $stmt = $db->select(...[
                 'username',
                 'first_name',
