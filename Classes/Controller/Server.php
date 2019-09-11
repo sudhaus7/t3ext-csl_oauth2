@@ -234,9 +234,10 @@ class Server {
                 'deleted'=>0
             ]
         );
+        
         $stmt->execute();
         $user = $stmt->fetch(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
-        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$table,$user,$database,$username,$password,$stmt]);
+        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$table,$user,$database,$username,$password,$stmt,$stmt->errorCode(),$stmt->errorInfo()]);
         exit;
         if (!empty($user)) {
             $hashedPassword = $user['password'];
