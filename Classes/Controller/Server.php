@@ -291,7 +291,8 @@ class Server {
                     $db->expr()->orX(...[
                         $db->expr()->eq('username',$db->quote($username)),
                         $db->expr()->eq('email',$db->quote($username)),
-                        $db->expr()->eq('member_id',$db->quote($username)),
+                        $db->expr()->comparison(' CAST('.$db->quoteIdentifier('member_id').' as CHAR) ', $db->expr()::EQ, $db->quote($username)),
+                        
                     ])
                 
             );
