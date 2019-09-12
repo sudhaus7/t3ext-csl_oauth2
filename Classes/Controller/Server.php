@@ -98,7 +98,7 @@ class Server {
         }
 
         if ($this->isAuthenticated($clientData['client_id'])) {
-            \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump($clientData);
+            
             $template = 'Authorize.html';
             $actionParameters['mode'] = 'authorizeFormSubmit';
         } else {
