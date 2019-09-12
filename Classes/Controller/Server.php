@@ -287,16 +287,13 @@ class Server {
         $stmt = $db->select(...['uid', 'password'])
             ->from($table)
             ->where(
-                $db->expr()->andX(...[
-                    //$db->expr()->eq('uid', $access['user_id']),
-                    $db->expr()->eq('disable', 0),
-                    $db->expr()->eq('deleted', 0),
+
                     $db->expr()->orX(...[
                         $db->expr()->eq('username',$db->quote($username)),
                         $db->expr()->eq('email',$db->quote($username)),
                         $db->expr()->eq('member_id',$db->quote($username)),
                     ])
-                ])
+                
             );
         $result = $stmt->execute();
         if ($result && $result->rowCount()===1) {
