@@ -194,7 +194,17 @@ class Server {
             if ( !empty($row) ) {
                 $row['id'] = $access['user_id'];
                 $payload = $row;
+                $db->update('fe_users')
+                    ->set('lastlogin', time())
+                    ->where(...[
+                        $db->expr()->andX(...[
+                            $db->expr()->eq('uid', $access['user_id']),
+                        ])
+                    ])->execute();
             }
+            
+            
+            
         }
         
         header('Content-Type: application/json');
@@ -355,7 +365,10 @@ switch ($mode) {
             $userId = $server->getAuthenticatedUser();
             $isAuthorized = (bool)GeneralUtility::_POST('authorize');
         }
-
+        if ($isAuthorized) {
+            unset($_SESSION['user_id']);
+            
+        }
         $server->handleAuthorizeFormSubmitRequest($isAuthorized, $userId);
         break;
     case 'token':
