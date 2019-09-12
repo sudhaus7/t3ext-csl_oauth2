@@ -302,10 +302,7 @@ class Server {
         }
         
         
-        
- 
-        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$table,$user,$username,$password,$result->errorCode(),$result->errorInfo(),$result->rowCount(),$stmt->getSQL()]);
-        exit;
+    
         if (!empty($user)) {
             $hashedPassword = $user['password'];
     
@@ -364,8 +361,8 @@ switch ($mode) {
             $isAuthorized = (bool)GeneralUtility::_POST('authorize');
         }
         if ($isAuthorized) {
-            \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$isAuthorized,$userId,$_SESSION]);
-            //unset($_SESSION['user_id']);
+            //\TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$isAuthorized,$userId,$_SESSION]);
+            unset($_SESSION['user_id']);
             
         }
         $server->handleAuthorizeFormSubmitRequest($isAuthorized, $userId);
