@@ -120,7 +120,7 @@ class Server {
         $view->setPartialRootPaths([$this->extPath . 'Resources/Private/Partials/']);
         $view->setTemplatePathAndFilename($this->extPath . 'Resources/Private/Templates/' . $template);
     
-        $signalSlotDispatcher = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+       
         
         
         
@@ -135,7 +135,8 @@ class Server {
             'messages' => $messages,
         ]);
     
-        list($view) = $signalSlotDispatcher->dispatch(self::class, 'viewPreRender',[$view]);
+        $signalSlotDispatcher = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+        list($view,$template) = $signalSlotDispatcher->dispatch(self::class, 'viewPreRender',[$view,$template]);
         $html = $view->render();
         echo $html;
     }
@@ -322,7 +323,14 @@ switch ($mode) {
         try {
             $server->handleAuthorizeRequest();
         } catch(InvalidPasswordHashException $e) {
-            echo 'muss reg machen';
+            $content = null;
+            $signalSlotDispatcher = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+            list($content) = $signalSlotDispatcher->dispatch(self::class, 'invalidPasswordHashException',[$content]);
+            if ($content === null) {
+                throw new InvalidPasswordHashException($e->getMessage(),$e->getCode());
+            } else {
+                echo $content;
+            }
         }
         break;
     case 'authorizeFormSubmit':
