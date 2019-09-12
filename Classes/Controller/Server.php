@@ -15,6 +15,7 @@
 namespace Causal\CslOauth2\Controller;
 
 use Doctrine\DBAL\FetchMode;
+use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -313,7 +314,11 @@ $mode = GeneralUtility::_GET('mode');
 switch ($mode) {
     case 'authorize':
         session_start();
-        $server->handleAuthorizeRequest();
+        try {
+            $server->handleAuthorizeRequest();
+        } catch(InvalidPasswordHashException $e) {
+            echo 'muss reg machen';
+        }
         break;
     case 'authorizeFormSubmit':
         session_start();
