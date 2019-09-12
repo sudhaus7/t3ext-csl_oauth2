@@ -306,7 +306,7 @@ class Server {
         
         
  
-        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$table,$user,$username,$password,$result->errorCode(),$result->errorInfo(),$result->rowCount(),$stmt->getQueryParts()]);
+        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$table,$user,$username,$password,$result->errorCode(),$result->errorInfo(),$result->rowCount(),$stmt->getSQL()]);
         exit;
         if (!empty($user)) {
             $hashedPassword = $user['password'];
