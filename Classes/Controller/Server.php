@@ -17,6 +17,7 @@ namespace Causal\CslOauth2\Controller;
 use Doctrine\DBAL\FetchMode;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class Server {
@@ -248,15 +249,12 @@ class Server {
         $value = \TYPO3\CMS\Extbase\Utility\LocalizationUtility::translate($id, $this->extKey, $arguments);
         return $value !== null ? $value : $id;
     }
-
+    
     /**
-     * Performs a TYPO3 login with given credentials.
-     *
-     * @param string $context
-     * @param string $username
-     * @param string $password
-     * @return void
-     * @throws \InvalidArgumentException
+     * @param $context
+     * @param $username
+     * @param $password
+     * @throws InvalidPasswordHashException
      */
     protected function doLogin($context, $username, $password)
     {
@@ -273,16 +271,28 @@ class Server {
                 throw new \InvalidArgumentException('Context "' . $context . '" is not yet implemented', 1459697724);
         }
 
-        $database = $this->getDatabaseConnection($table);
-        $user = $database->select(
-            ['uid', 'password'],
-            $table,
-            [
-                'username'=>$username, //$database->quoteIdentifier($username),
-                'disable'=>0,
-                'deleted'=>0
-            ]
-        )->fetch(\Doctrine\DBAL\FetchMode::ASSOCIATIVE);
+        $user = null;
+        $db = $this->getDatabaseConnection($table);
+        $stmt = $db->select(...['uid', 'password'])
+            ->from($table)
+            ->where(
+                $db->expr()->andX(...[
+                    //$db->expr()->eq('uid', $access['user_id']),
+                    $db->expr()->eq('disable', 0),
+                    $db->expr()->eq('deleted', 0),
+                    $db->expr()->orX(...[
+                        $db->expr()->eq('username',$db->quote($username)),
+                        $db->expr()->eq('email',$db->quote($username)),
+                        $db->expr()->eq('member_id',$db->quote($username)),
+                    ])
+                ])
+            );
+        $result = $stmt->execute();
+        if ($result && $result->rowCount()===1) {
+            $user = $result->fetch(\PDO::FETCH_ASSOC);
+        }
+        
+        
         
  
        // \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$table,$user,$database,$username,$password,$stmt,$stmt->errorCode(),$stmt->errorInfo()]);
@@ -306,11 +316,12 @@ class Server {
     }
     
     /**
-     * @return \TYPO3\CMS\Core\Database\Connection
+     * @param $table
+     * @return QueryBuilder
      */
-    protected function getDatabaseConnection($table) : \TYPO3\CMS\Core\Database\Connection
+    protected function getDatabaseConnection($table) : QueryBuilder
     {
-        return GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($table);
+        return GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($table);
     }
 }
 
