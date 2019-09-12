@@ -366,7 +366,8 @@ switch ($mode) {
             $isAuthorized = (bool)GeneralUtility::_POST('authorize');
         }
         if ($isAuthorized) {
-            unset($_SESSION['user_id']);
+            \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$isAuthorized,$userId,$_SESSION]);
+            //unset($_SESSION['user_id']);
             
         }
         $server->handleAuthorizeFormSubmitRequest($isAuthorized, $userId);
