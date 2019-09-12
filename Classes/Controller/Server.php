@@ -119,7 +119,11 @@ class Server {
         $view->setLayoutRootPaths([$this->extPath . 'Resources/Private/Layouts/']);
         $view->setPartialRootPaths([$this->extPath . 'Resources/Private/Partials/']);
         $view->setTemplatePathAndFilename($this->extPath . 'Resources/Private/Templates/' . $template);
-
+    
+        $signalSlotDispatcher = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+        
+        
+        
         // Initialize localization
         $view->getRequest()->setControllerExtensionName($this->extKey);
 
@@ -130,7 +134,8 @@ class Server {
             'username' => $username,
             'messages' => $messages,
         ]);
-
+    
+        list($view) = $signalSlotDispatcher->dispatch(self::class, 'viewPreRender',[$view]);
         $html = $view->render();
         echo $html;
     }
