@@ -343,7 +343,6 @@ switch ($mode) {
             $content = null;
             $signalSlotDispatcher = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
             list($content) = $signalSlotDispatcher->dispatch(Server::class, 'invalidPasswordHashException',[$content]);
-            \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$content,$e]);
             if ($content === null) {
                 throw new InvalidPasswordHashException($e->getMessage(),$e->getCode());
             } else {
