@@ -177,7 +177,7 @@ class Server {
         if (!empty($access)) {
             $db = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('fe_users');
             $stmt = $db->select(...[
-                
+                'member_id',
                 'username',
                 'first_name',
                 'last_name',
