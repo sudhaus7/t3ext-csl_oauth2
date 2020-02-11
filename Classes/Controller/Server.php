@@ -55,6 +55,9 @@ class Server {
         // Add the "Authorization Code" grant type (this is where the oauth magic happens)
         $this->oauth2Server->addGrantType(new \OAuth2\GrantType\AuthorizationCode($storage));
 
+        // Add Refreshtoken grant type
+        $this->oauth2Server->addGrantType(new \OAuth2\GrantType\RefreshToken($storage));
+        
         // Trick when using fcgi, requires this in .htaccess:
         //
         //     RewriteEngine On
@@ -218,7 +221,12 @@ class Server {
     public function handleTokenRequest()
     {
         $request = \OAuth2\Request::createFromGlobals();
-        $this->oauth2Server->handleTokenRequest($request)->send();
+        $response = $this->oauth2Server->handleTokenRequest($request);
+        if (strpos($response->getParameter('error_description'),'expired')!==false) {
+            $response->setStatusCode(401,'Unauthorized');
+            $response->addHttpHeaders(['WWW-Authenticate'=> sprintf('Bearer realm="%s", error="%s", error_description="%s"',$request->request['client_id'],$response->getParameter('error'),$response->getParameter('error_description'))]);
+        }
+        $response->send();
     }
 
     /**
@@ -370,6 +378,7 @@ switch ($mode) {
     case 'token':
         $server->handleTokenRequest();
         break;
+
     case 'profile':
         $access_token = GeneralUtility::_GET('access_token');
         $server->handleProfileRequest($access_token);
@@ -377,3 +386,4 @@ switch ($mode) {
     default:
         throw new \Exception('Invalid mode provided: "' . $mode . '"', 1457023604);
 }
+
