@@ -19,8 +19,11 @@ use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Configuration\BackendConfigurationManager;
+use TYPO3\CMS\Extbase\Object\ObjectManager;
 
-class Server {
+class Server
+{
 
     /**
      * @var string
@@ -33,6 +36,16 @@ class Server {
     protected $extPath;
 
     /**
+     * @var ObjectManager
+     */
+    protected $objectManager;
+
+    /**
+     * @var BackendConfigurationManager
+     */
+    protected $configurationManager;
+
+    /**
      * @var \OAuth2\Server
      */
     protected $oauth2Server;
@@ -43,6 +56,8 @@ class Server {
     public function __construct()
     {
         $this->extPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath($this->extKey);
+
+        $this->objectManager = GeneralUtility::makeInstance(ObjectManager::class);
 
         $storage = new \Causal\CslOauth2\Storage\Typo3Pdo();
         $this->oauth2Server = new \OAuth2\Server($storage, [
@@ -101,7 +116,6 @@ class Server {
         }
 
         if ($this->isAuthenticated($clientData['client_id'])) {
-            
             $template = 'Authorize.html';
             $actionParameters['mode'] = 'authorizeFormSubmit';
         } else {
@@ -118,13 +132,33 @@ class Server {
 
         $actionUrl = GeneralUtility::getIndpEnv('SCRIPT_NAME') . '?' . http_build_query($actionParameters);
 
+        $this->configurationManager = $this->objectManager->get(BackendConfigurationManager::class);
+        if (!empty($this->configurationManager)) {
+            $typoScriptSetup = $this->configurationManager->getTypoScriptSetup();
+            $layoutRootPaths = $typoScriptSetup['plugin.']['csl_oauth2.']['view.']['layoutRootPaths.'];
+            $partialRootPaths = $typoScriptSetup['plugin.']['csl_oauth2.']['view.']['partialRootPaths.'];
+            $templateRootPaths = $typoScriptSetup['plugin.']['csl_oauth2.']['view.']['templateRootPaths.'];
+        }
+
+        if (empty($layoutRootPaths)) {
+            $layoutRootPaths = [$this->extPath . 'Resources/Private/Layouts/'];
+        }
+        if (empty($partialRootPaths)) {
+            $partialRootPaths = [$this->extPath . 'Resources/Private/Layouts/'];
+        }
+        if (empty($templateRootPaths)) {
+            $templatePath = $this->extPath . 'Resources/Private/Templates/' . $template;
+        } else {
+            $templatePath = end($templateRootPaths) . $template;
+        }
+
         // Generate a form to authorize the request
         /** @var \TYPO3\CMS\Fluid\View\StandaloneView $view */
         $view = GeneralUtility::makeInstance(\TYPO3\CMS\Fluid\View\StandaloneView::class);
-        $view->setLayoutRootPaths([$this->extPath . 'Resources/Private/Layouts/']);
-        $view->setPartialRootPaths([$this->extPath . 'Resources/Private/Partials/']);
-        $view->setTemplatePathAndFilename($this->extPath . 'Resources/Private/Templates/' . $template);
-    
+        $view->setLayoutRootPaths($layoutRootPaths);
+        $view->setPartialRootPaths($partialRootPaths);
+        $view->setTemplatePathAndFilename($templatePath);
+
        
         
         
@@ -141,7 +175,7 @@ class Server {
         ]);
     
         $signalSlotDispatcher = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
-        list($view,$template) = $signalSlotDispatcher->dispatch(self::class, 'viewPreRender',[$view,$template]);
+        list($view, $template) = $signalSlotDispatcher->dispatch(self::class, 'viewPreRender', [$view,$template]);
         $html = $view->render();
         echo $html;
     }
@@ -163,7 +197,8 @@ class Server {
     }
 
     
-    public function handleProfileRequest($access_token) {
+    public function handleProfileRequest($access_token)
+    {
         $db = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('tx_csloauth2_oauth_access_tokens');
         $payload = ['error' => 'not found'];
     
@@ -171,8 +206,8 @@ class Server {
             ->from('tx_csloauth2_oauth_access_tokens')
             ->where(
                 $db->expr()->andX(...[
-                    $db->expr()->eq('access_token',$db->quote($access_token)),
-                    $db->expr()->gt('expires','NOW()')
+                    $db->expr()->eq('access_token', $db->quote($access_token)),
+                    $db->expr()->gt('expires', 'NOW()')
                 ])
             );
         $result = $stmt->execute();
@@ -194,7 +229,7 @@ class Server {
                 );
             $result = $stmt->execute();
             $row = $result->fetch(\PDO::FETCH_ASSOC);
-            if ( !empty($row) ) {
+            if (!empty($row)) {
                 $row['id'] = $access['user_id'];
                 $payload = $row;
                 $db->update('fe_users')
@@ -205,14 +240,10 @@ class Server {
                         ])
                     ])->execute();
             }
-            
-            
-            
         }
         
         header('Content-Type: application/json');
         echo \json_encode($payload);
-        
     }
     /**
      * Handles a request for an OAuth2.0 Access Token and sends
@@ -222,9 +253,9 @@ class Server {
     {
         $request = \OAuth2\Request::createFromGlobals();
         $response = $this->oauth2Server->handleTokenRequest($request);
-        if (strpos($response->getParameter('error_description'),'expired')!==false) {
-            $response->setStatusCode(401,'Unauthorized');
-            $response->addHttpHeaders(['WWW-Authenticate'=> sprintf('Bearer realm="%s", error="%s", error_description="%s"',$request->request['client_id'],$response->getParameter('error'),$response->getParameter('error_description'))]);
+        if (strpos($response->getParameter('error_description'), 'expired')!==false) {
+            $response->setStatusCode(401, 'Unauthorized');
+            $response->addHttpHeaders(['WWW-Authenticate'=> sprintf('Bearer realm="%s", error="%s", error_description="%s"', $request->request['client_id'], $response->getParameter('error'), $response->getParameter('error_description'))]);
         }
         $response->send();
     }
@@ -295,14 +326,12 @@ class Server {
         $stmt = $db->select(...['uid', 'password'])
             ->from($table)
             ->where(
-
-                    $db->expr()->orX(...[
-                        $db->expr()->eq('username',$db->quote($username)),
-                        $db->expr()->eq('email',$db->quote($username)),
+                $db->expr()->orX(...[
+                        $db->expr()->eq('username', $db->quote($username)),
+                        $db->expr()->eq('email', $db->quote($username)),
                         $db->expr()->comparison(' CAST('.$db->quoteIdentifier('member_id').' as CHAR) ', $db->expr()::EQ, $db->quote($username)),
                         
                     ])
-                
             );
         $result = $stmt->execute();
         if ($result && $result->rowCount()===1) {
@@ -325,7 +354,6 @@ class Server {
                 }
             }
             //\TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$hashedPassword, $context,$objInstanceSaltedPW,$validPasswd]);
-    
         }
     }
     
@@ -347,12 +375,12 @@ switch ($mode) {
         session_start();
         try {
             $server->handleAuthorizeRequest();
-        } catch(InvalidPasswordHashException $e) {
+        } catch (InvalidPasswordHashException $e) {
             $content = null;
             $signalSlotDispatcher = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
-            list($content) = $signalSlotDispatcher->dispatch(Server::class, 'invalidPasswordHashException',[$content]);
+            list($content) = $signalSlotDispatcher->dispatch(Server::class, 'invalidPasswordHashException', [$content]);
             if ($content === null) {
-                throw new InvalidPasswordHashException($e->getMessage(),$e->getCode());
+                throw new InvalidPasswordHashException($e->getMessage(), $e->getCode());
             } else {
                 echo $content;
             }
@@ -371,7 +399,6 @@ switch ($mode) {
         if ($isAuthorized) {
             //\TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump([$isAuthorized,$userId,$_SESSION]);
             unset($_SESSION['user_id']);
-            
         }
         $server->handleAuthorizeFormSubmitRequest($isAuthorized, $userId);
         break;
@@ -386,4 +413,3 @@ switch ($mode) {
     default:
         throw new \Exception('Invalid mode provided: "' . $mode . '"', 1457023604);
 }
-
